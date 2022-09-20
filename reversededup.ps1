@@ -63,20 +63,18 @@ $sb_coordinator = {
         param ($api__, $path_)
         try {
             Write-Host "Discovered $path_"
-            $items = Get-ChildItem $path_
+            $items = Get-ChildItem $path_ -Directory
             foreach ($item in $items) 
             {
-                if ($item.Mode -eq "d-----") 
-                {
-                    $folder = "$path_\$item"
-                    write-host $folder -foregroundcolor Red
-                    Write-Host "..."
-                    $endpoint = "/set"
-                    $request = $api__ + $endpoint
-                    $response = Invoke-RestMethod -Uri $request -Method Post -Body $folder
-                    crawl $api__ $folder  
-                }
+                $folder = "$path_\$item"
+                write-host $folder -foregroundcolor Red
+                Write-Host "..."
+                $endpoint = "/set"
+                $request = $api__ + $endpoint
+                $response = Invoke-RestMethod -Uri $request -Method Post -Body $folder
+                crawl $api__ $folder  
             }
+
         } catch { Write-Host $_.ScriptStackTrace }
         return
     }
@@ -114,12 +112,15 @@ $sb_worker = {
                 $items = Get-ChildItem $path
                 foreach ($item in $items) 
                 {
-                    if ($item.LinkType -eq "HardLink") 
+                    $count = 0
+                    $count = fsutil hardlink list "$($item.FullName)"
+                    if ($count.count -gt 1)
                     {
                         $random = (-join ((65..90) + (97..122) | Get-Random -Count 16 | % {[char]$_}))
-                        Write-Host $path\$item -foregroundcolor Yellow
-                        Move-Item -Path $path/$($item.Name) -Destination $temp_location_/$random
-                        Move-Item -Path $temp_location_/$random -Destination $path/$($item.Name)
+                        Write-Host "$path\$item" -foregroundcolor Yellow
+                        Move-Item -Path "$path/$($item.Name)" -Destination "$temp_location_/$random"
+                        Start-Sleep -Seconds 5
+                        Move-Item -Path "$temp_location_/$random" -Destination "$path/$($item.Name)"
                     }
                 }
             } catch { Write-Host $_.ScriptStackTrace }
@@ -151,4 +152,3 @@ function main
 }
 
 main
-
