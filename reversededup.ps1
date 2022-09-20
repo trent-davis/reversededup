@@ -119,7 +119,6 @@ $sb_worker = {
                         $random = (-join ((65..90) + (97..122) | Get-Random -Count 16 | % {[char]$_}))
                         Write-Host "$path\$item" -foregroundcolor Yellow
                         Move-Item -Path "$path/$($item.Name)" -Destination "$temp_location_/$random"
-                        Start-Sleep -Seconds 5
                         Move-Item -Path "$temp_location_/$random" -Destination "$path/$($item.Name)"
                     }
                 }
